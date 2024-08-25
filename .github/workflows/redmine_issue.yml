@@ -15,4 +15,4 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
       - name: Create new Ticket
-        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project":{"id":2,"name":"クリスマス大型アップデート (v2.3.0)"},"tracker":{"id":1,"name":"バグ"},"status":{"id":1,"name":"新規"},"priority":{"id":2,"name":"通常"}"subject":"sample","description":"# Kusa\r\n\r\n-sample-"}' http://redmine-serverstarter2:3000/issues.json
+        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project_id":2,"tracker_id":1,"priority_id":2,"subject":"sample","description":"test"}' http://redmine-serverstarter2:3000/issues.json
