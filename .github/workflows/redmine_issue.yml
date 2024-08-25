@@ -15,11 +15,14 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      # Tailescaleは https://zenn.dev/mimi_chan/articles/599841c45b4d49 の記事に従って設定する
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
+      # Redmineは env が設定されていれば動く
+      # Issue（Ticket）を作ったことにしたいユーザーの REDMINE_API_KEY をsecretに登録しておく
       - name: Create new Ticket
-        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project_id":${{env.PROJECT_ID}},"subject":"${{github.event.issue.title}}","description":"${{github.event.issue.body}}","priority_id":2,"tracker_id":1,"status_id":1}}' ${{env.TARGET_URL}}/issues.json
+        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project_id":${{env.PROJECT_ID}},"subject":"${{github.event.issue.title}}","description":"詳細は元のIssuesを参照\n${{github.event.issue.url}}","priority_id":2,"tracker_id":1,"status_id":1}}' ${{env.TARGET_URL}}/issues.json
