@@ -4,6 +4,13 @@ on:
  issues: 
    types: [opened]
 
+env:
+  # RedmineのURL
+  TARGET_URL: http://redmine-serverstarter2:3000
+  # RedmineのプロジェクトID
+  # 現在は v2.3.0 のプロジェクトにIssueを立てる設定となっているため，プロジェクト変更時はここを変更する
+  PROJECT_ID: 2
+
 jobs:
   notify:
     runs-on: ubuntu-latest
@@ -15,4 +22,4 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
       - name: Create new Ticket
-        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project_id":2,"subject":"Example","priority_id":1,"tracker_id":1,"status_id":1}}' http://redmine-serverstarter2:3000/issues.json
+        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project_id":${{env.PROJECT_ID}},"subject":"${{github.event.issue.title}}","priority_id":2,"tracker_id":1,"status_id":1}}' ${{env.TARGET_URL}}/issues.json
