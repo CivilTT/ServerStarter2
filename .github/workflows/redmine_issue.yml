@@ -15,4 +15,4 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
       - name: Create new Ticket
-        run: curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"notes":"Issues [${{github.event.issue.title}}](sample) ${{github.event.action}}"}}' http://redmine-serverstarter2:3000/issues/1.json
+        run: curl -X POST -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"project_id":1,"subject":"Example","priority_id":1}}' http://redmine-serverstarter2:3000/issues.json
