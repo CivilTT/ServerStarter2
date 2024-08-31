@@ -39,6 +39,6 @@ jobs:
       - name: Send pr info to redmine
         if: steps.parse.outputs.number != 0
         run: |
-          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID}},"notes":"pull request [${{github.event.pull_request.title}}](${{github.event.pull_request._links.html.href}}) ${{github.event.action}}"}}' ${{env.TARGET_URL}}/${{steps.parse.outputs.number}}.json
+          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID}},"notes":"pull request [${{github.event.pull_request.title}}](${{github.event.pull_request._links.html.href}}) ${{github.event.action}}"}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
         
   
