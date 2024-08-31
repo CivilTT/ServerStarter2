@@ -32,7 +32,7 @@ jobs:
 
       - name: Get commit messages
         run: |
-          commits=$(git log --format=%B ${{ github.event.before }}..${{ github.sha }})
+          commits=$(git log --format=%B ${{ github.event.before }}..${{ github.event.after }})
           echo "$commits" | while read -r commit_message; do
             echo "$commit_message"
           done
