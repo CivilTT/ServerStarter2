@@ -12,7 +12,8 @@ env:
   # PROJECT_ID: 2
   
   # ステータスの番号（「作業中」の並び順番号を指定）
-  TARGET_STATUS_ID: 2
+  TARGET_STATUS_ID_Progress: 2
+  TARGET_STATUS_ID_Close: 5
 
 jobs:
   notify:
@@ -36,27 +37,9 @@ jobs:
         run: |
           commits=$(git log --format=%B ${{ github.event.before }}..${{ github.event.after }})
           echo "$commits" | while read -r commit_message; do
-            echo "$commit_message"
+            if [[ $commit_message =~ [rR]ef#([0-9]+) ]]; then
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Progress}}}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+            elif [[ $commit_message =~ [cC]lose#([0-9]+) ]]; then
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Close}}}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+            fi
           done
-      
-      # # PRのタイトルで「PR#00 タイトル」のようにしたとき，チケット番号である#00の数値を抽出
-      # - name: Parse PR Title
-      #   id: parse
-      #   run: |
-      #     if [[ "${{github.event.pull_request.title}}" =~ PR#([0-9]+) ]]; then
-      #       echo "::set-output name=number::${BASH_REMATCH[1]}"
-      #     else
-      #       echo "::set-output name=number::0"
-      #     fi
-      # # ステータスを「終了」に進める
-      # - name: Send pr info to redmine (pr is closed)
-      #   if: steps.parse.outputs.number != 0 && github.event.pull_request.merged == true
-      #   run: |
-      #     curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_MERGED}}}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
-      # # ステータスを「却下」に進める
-      # - name: Send pr info to redmine (pr is rejected)
-      #   if: steps.parse.outputs.number != 0 && github.event.pull_request.merged == false
-      #   run: |
-      #     curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_REJECT}}}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
-        
-  
