@@ -2,7 +2,7 @@ name: Pull Request to Redmine
 
 on: 
   pull_request: 
-    types: [opened]
+    # types: [opened]
 
 env:
   # RedmineのURL
@@ -30,7 +30,7 @@ jobs:
       - name: Parse PR Title
         id: parse
         run: |
-          if [[ ${{github.event.pull_request.title}} =~ PR#([0-9]+) ]]; then
+          if [[ "${{github.event.pull_request.title}}" =~ PR#([0-9]+) ]]; then
             echo "::set-output name=number::${BASH_REMATCH[1]}"
           else
             echo "::set-output name=number::0"
