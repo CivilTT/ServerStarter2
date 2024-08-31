@@ -32,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get commit messages
+      - name: Get commit messages and Send a message to Redmine
         run: |
           commits=$(git log --format=%B ${{ github.event.before }}..${{ github.event.after }})
           echo "$commits" | while read -r commit_message; do
