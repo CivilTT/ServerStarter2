@@ -1,4 +1,4 @@
-name: Redmien
+name: Redmine
 
 on:
  issues: 
@@ -8,8 +8,8 @@ env:
   # RedmineのURL
   TARGET_URL: http://redmine-serverstarter2:3000
   # RedmineのプロジェクトID
-  # 現在は v2.3.0 のプロジェクトにIssueを立てる設定となっているため，プロジェクト変更時はここを変更する
-  PROJECT_ID: 2
+  # ServerStarter2の本体プロジェクトに向けてチケットを発行する
+  PROJECT_ID: 1
 
 jobs:
   notify:
