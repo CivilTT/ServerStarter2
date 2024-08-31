@@ -13,8 +13,8 @@ env:
   # PROJECT_ID: 2
   
   # ステータスの番号（「却下」「マージ済み」の並び順番号を指定）
-  TARGET_STATUS_ID_REJECT: 7
-  TARGET_STATUS_ID_MERGED: 6
+  TARGET_STATUS_ID_REJECT: 6Z
+  TARGET_STATUS_ID_MERGED: 5
 
 jobs:
   notify:
@@ -31,7 +31,7 @@ jobs:
       - name: Parse PR Title
         id: parse
         run: |
-          if [[ ${{github.event.pull_request.title}} =~ PR#([0-9]+) ]]; then
+          if [[ "${{github.event.pull_request.title}}" =~ PR#([0-9]+) ]]; then
             echo "::set-output name=number::${BASH_REMATCH[1]}"
           else
             echo "::set-output name=number::0"
@@ -41,6 +41,6 @@ jobs:
         if: steps.parse.outputs.number != 0
         run: |
           status_id=${{(github.event.pull_request.merged == true && env.TARGET_STATUS_ID_MERGED) || env.TARGET_STATUS_ID_REJECT}}
-          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":$status_id}}' ${{env.TARGET_URL}}/${{steps.parse.outputs.number}}.json
+          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":$status_id}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
         
   
