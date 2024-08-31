@@ -12,8 +12,8 @@ env:
   # 現在は v2.3.0 のプロジェクトにIssueを立てる設定となっているため，プロジェクト変更時はここを変更する
   # PROJECT_ID: 2
   
-  # ステータスの番号（「却下」「マージ済み」の並び順番号を指定）
-  TARGET_STATUS_ID_REJECT: 6Z
+  # ステータスの番号（「却下」「終了」の並び順番号を指定）
+  TARGET_STATUS_ID_REJECT: 6
   TARGET_STATUS_ID_MERGED: 5
 
 jobs:
@@ -36,11 +36,15 @@ jobs:
           else
             echo "::set-output name=number::0"
           fi
-      # ステータスを「却下」に進める
-      - name: Send pr info to redmine
-        if: steps.parse.outputs.number != 0
+      # ステータスを「終了」に進める
+      - name: Send pr info to redmine (pr is closed)
+        if: steps.parse.outputs.number != 0 && github.event.pull_request.merged == true
         run: |
-          status_id=${{(github.event.pull_request.merged == true && env.TARGET_STATUS_ID_MERGED) || env.TARGET_STATUS_ID_REJECT}}
-          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":$status_id}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
+          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_MERGED}}}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
+      # ステータスを「却下」に進める
+      - name: Send pr info to redmine (pr is rejected)
+        if: steps.parse.outputs.number != 0 && github.event.pull_request.merged == false
+        run: |
+          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_REJECT}}}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
         
   

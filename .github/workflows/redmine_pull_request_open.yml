@@ -2,7 +2,7 @@ name: Pull Request to Redmine
 
 on: 
   pull_request: 
-    # types: [opened]
+    types: [opened]
 
 env:
   # RedmineのURL
