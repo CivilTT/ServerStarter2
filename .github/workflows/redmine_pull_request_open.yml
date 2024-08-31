@@ -1,0 +1,44 @@
+name: Pull Request to Redmine
+
+on: 
+  pull_request: 
+    # types: [opened]
+
+env:
+  # RedmineのURL
+  TARGET_URL: http://redmine-serverstarter2:3000
+
+  # RedmineのプロジェクトID
+  # 現在は v2.3.0 のプロジェクトにIssueを立てる設定となっているため，プロジェクト変更時はここを変更する
+  # PROJECT_ID: 2
+  
+  # ステータスの番号（「承認待ち」の並び順番号を指定）
+  TARGET_STATUS_ID: 3
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      # Tailescaleは https://zenn.dev/mimi_chan/articles/599841c45b4d49 の記事に従って設定する
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+      # PRのタイトルで「PR#00 タイトル」のようにしたとき，チケット番号である#00の数値を抽出
+      - name: Parse PR Title
+        id: parse
+        run: |
+          if [[ "${{github.event.pull_request.title}}" =~ PR#([0-9]+) ]]; then
+            echo "::set-output name=number::${BASH_REMATCH[1]}"
+          else
+            echo "::set-output name=number::0"
+          fi
+      # コメントの追加とステータスを「承認待ち」に進める
+      - name: Send pr info to redmine
+        if: steps.parse.outputs.number != 0
+        run: |
+          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID}},"notes":"Pull Request [${{github.event.pull_request.title}}](${{github.event.pull_request._links.html.href}}) is opend"}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
+        
+  
