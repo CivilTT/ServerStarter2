@@ -50,8 +50,8 @@ jobs:
             cmd='git log --format=%B ${commit_hash} -1'
             commit_message=$(eval ${cmd})
             if [[ $commit_message =~ [rR]ef#([0-9]+) ]]; then
-              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d "{"issue":{"status_id":${{env.TARGET_STATUS_ID_Progress}},"notes":"Refered by the [$commit_message](https://github.com/${{github.repository}}/commit/$commit_hash)"}}" ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d "{"issue":{"status_id":${{env.TARGET_STATUS_ID_Progress}},"notes":"Refered by the [${commit_message}](https://github.com/${{github.repository}}/commit/${commit_hash})"}}" ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
             elif [[ $commit_message =~ [cC]lose#([0-9]+) ]]; then
-              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d "{"issue":{"status_id":${{env.TARGET_STATUS_ID_Close}},"notes":"Closed by the [$commit_message](https://github.com/${{github.repository}}/commit/$commit_hash)"}}" ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d "{"issue":{"status_id":${{env.TARGET_STATUS_ID_Close}},"notes":"Closed by the [${commit_message}](https://github.com/${{github.repository}}/commit/${commit_hash})"}}" ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
             fi
           done
