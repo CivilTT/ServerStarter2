@@ -33,9 +33,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      # ブランチを切った直後の場合，beforeが存在しないため000...となってしまうことに対する対策
+      - name: Check before commit
+        id: log_arg
+        run: |
+          if [[ "${{ github.event.before }}" == 0000000000000000000000000000000000000000 ]]; then
+            echo "::set-output name=arg::${{ github.event.after }} -1"
+          else
+            echo "::set-output name=arg::${{ github.event.before }}..${{ github.event.after }}"
+          fi
+
       - name: Get commit messages and Send a message to Redmine
         run: |
-          commits=$(git log --format=%B ${{ github.event.before }}..${{ github.event.after }})
+          commits=$(git log --format=%B ${{ steps.log_arg.outputs.arg }})
           echo "$commits" | while read -r commit_message; do
             if [[ $commit_message =~ [rR]ef#([0-9]+) ]]; then
               curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Progress}}}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
