@@ -108,11 +108,9 @@ jobs:
         if: github.event.action == 'closed' && steps.issue_id.outputs.number != 0
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { Octokit } = require("@octokit/rest");
-            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-
-            await octokit.issues.update({
+            await github.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{steps.issue_id.outputs.number}},
