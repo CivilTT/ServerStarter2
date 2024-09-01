@@ -68,7 +68,8 @@ jobs:
         run: |
           echo TicketID:${{steps.ticket_id.outputs.number}}
           echo IssueID:${{steps.issue_id.outputs.number}}
-          echo ActionType:${{github.action}}
+          echo ActionName:${{github.event_name}}
+          echo ActionType:${{github.event.action}}
 
       # pull requestが開かれたことを受けて，Ticketのステータスを「承認待ち」に変更する
       - name: Send pr info to redmine
