@@ -51,9 +51,10 @@ jobs:
           tmp=$(cat issues.json | jq -r '.issues[] | select(.subject | contains("${{github.event.issue.title}}")) | .id')
           echo "::set-output name=number::${tmp}"
       
-      - name: Close a ticket
-        if: github.event.issue.state_reason == 'completed'
-        run: curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_CLOSED}}}}' ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
+      # 実装現在では，「新規」⇒「終了」のステータス遷移は禁止しているため，下記はコメントアウト
+      # - name: Close a ticket
+      #   if: github.event.issue.state_reason == 'completed'
+      #   run: curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_CLOSED}}}}' ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
       - name: Reject a ticket
         if: github.event.issue.state_reason == 'not_planned'
         run: curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_REJECT}}}}' ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
