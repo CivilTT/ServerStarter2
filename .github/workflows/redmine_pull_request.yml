@@ -2,7 +2,7 @@ name: Pull Request to Redmine
 
 on: 
   pull_request: 
-    types: [opened,closed]
+    # types: [opened,closed]
   pull_request_review: 
     types: [submitted,dismissed]
 
