@@ -49,7 +49,7 @@ jobs:
         id: ticket_id
         run: |
           tmp=$(cat issues.json | jq -r '.issues[] | select(.subject | contains("${{github.event.issue.title}}")) | .id')
-          echo "::set-output name=number::${tmp}
+          echo "::set-output name=number::${tmp}"
       
       - name: Close a ticket
         if: github.event.issue.state_reason == 'complete'
