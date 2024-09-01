@@ -52,7 +52,7 @@ jobs:
           echo "::set-output name=number::${tmp}"
       
       - name: Close a ticket
-        if: github.event.issue.state_reason == 'complete'
+        if: github.event.issue.state_reason == 'completed'
         run: curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_CLOSED}}}}' ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
       - name: Reject a ticket
         if: github.event.issue.state_reason == 'not_planned'
