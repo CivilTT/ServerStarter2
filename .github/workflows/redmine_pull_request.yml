@@ -58,14 +58,17 @@ jobs:
       - name: Parse Ticket Title
         id: issue_id
         run: |
-          cat data.json
-          jq .issue.subject data.json
           if [[ $(jq .issue.subject data.json) =~ Issue#([0-9]+) ]]; then
             echo "::set-output name=number::${BASH_REMATCH[1]}"
           else
             echo "::set-output name=number::0"
           fi
 
+      - name: Show info
+        run: |
+          echo TicketID:${{steps.ticket_id.outputs.number}}
+          echo IssueID:${{steps.issue_id.outputs.number}}
+          echo ActionType:${{github.action}}
 
       # pull requestが開かれたことを受けて，Ticketのステータスを「承認待ち」に変更する
       - name: Send pr info to redmine
