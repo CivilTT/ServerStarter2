@@ -59,6 +59,7 @@ jobs:
         id: issue_id
         run: |
           cat data.json
+          jq .issue.subject data.json
           if [[ $(jq .issue.subject data.json) =~ Issue#([0-9]+) ]]; then
             echo "::set-output name=number::${BASH_REMATCH[1]}"
           else
