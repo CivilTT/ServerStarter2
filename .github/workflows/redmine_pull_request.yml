@@ -68,7 +68,7 @@ jobs:
       - name: Send pr info to redmine
         if: github.event.action == 'opened' && steps.ticket_id.outputs.number != 0
         run: |
-          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_WantCheck}},"notes":"Pull Request [${{github.event.pull_request.title}}](${{github.event.pull_request._links.html.href}}) is opend"}}' ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
+          curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_WantCheck}},"notes":"Pull Request [${{github.event.pull_request.title}}](${{github.event.pull_request._links.html.href}}) is opened"}}' ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
       - name: Set comment for related issue
         if: github.event.action == 'opened' && steps.issue_id.outputs.number != 0
         uses: peter-evans/create-or-update-comment@v1
