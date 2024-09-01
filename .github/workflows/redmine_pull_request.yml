@@ -58,7 +58,7 @@ jobs:
       - name: Parse Ticket Title
         id: issue_id
         run: |
-          if [[ $(jq -r '.issue.subject' data.json) =~ Issue#([0-9]+) ]]; then
+          if [[ $(jq '.issue.subject' - data.json) =~ Issue#([0-9]+) ]]; then
             echo "::set-output name=number::${BASH_REMATCH[1]}"
           else
             echo "::set-output name=number::0"
