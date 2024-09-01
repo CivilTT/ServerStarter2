@@ -48,9 +48,9 @@ jobs:
           commits=$(git log --format=%B ${{ steps.log_arg.outputs.arg }})
           echo "$commits" | while read -r commit_message; do
             if [[ $commit_message =~ [rR]ef#([0-9]+) ]]; then
-              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Progress}},"notes":"sample comment"}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Progress}},"notes":"sample comment [link](https://server-starter-for-minecraft.github.io)"}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
             elif [[ $commit_message =~ [cC]lose#([0-9]+) ]]; then
-              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Close}},"notes":"sample comment"}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Close}},"notes":"sample comment [link](https://server-starter-for-minecraft.github.io)"}}' ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
             fi
           done
         # run: |
