@@ -54,16 +54,13 @@ jobs:
 
       # Redmine側のタイトルを取得する
       - name: Get Redmine Title
-        id: ticket_title
-        uses: senmu/download-json-property-action@v1.1.0
-        with:
-          url: ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json
-          property_path: issue.subject
+        run: |
+          curl -H "Accept: application/json" ${{env.TARGET_URL}}/issues/${{steps.ticket_id.outputs.number}}.json -o data.json
       # Redmine側のチケットのタイトルにある「Issues#00」のうち，#00の数値を抽出
       - name: Parse Ticket Title
         id: issue_id
         run: |
-          if [[ "${{ steps.ticket_title.outputs.value }}" =~ Issue#([0-9]+) ]]; then
+          if [[ $(jq -r '.subject' data.json) =~ Issue#([0-9]+) ]]; then
             echo "::set-output name=number::${BASH_REMATCH[1]}"
           else
             echo "::set-output name=number::0"
@@ -74,22 +71,21 @@ jobs:
       issue_id: ${{steps.issue_id.outputs.number}}
 
 
-  # pull requestが開かれたことを受けて，Ticketのステータスを「承認待ち」に変更する
-  pr_open:
+  pr_notify:
     needs: 
       - connect_private_network
       - parse_titles
     
     runs-on: ubuntu-latest
-    if: github.action == 'opened'
 
-    steps:
+    steps:      
+      # pull requestが開かれたことを受けて，Ticketのステータスを「承認待ち」に変更する
       - name: Send pr info to redmine
-        if: needs.parse_titles.outputs.ticket_id != 0
+        if: github.action == 'opened' && needs.parse_titles.outputs.ticket_id != 0
         run: |
           curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_WantCheck}},"notes":"Pull Request [${{github.event.pull_request.title}}](${{github.event.pull_request._links.html.href}}) is opend"}}' ${{env.TARGET_URL}}/issues/${{needs.parse_titles.outputs.ticket_id}}.json
       - name: Set comment for related issue
-        if: needs.parse_titles.outputs.issue_id != 0
+        if: github.action == 'opened' && needs.parse_titles.outputs.issue_id != 0
         uses: peter-evans/create-or-update-comment@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -97,59 +93,34 @@ jobs:
           body: |
             このIssueは #${{github.event.pull_request.number}} によって修正予定です
 
-
-  # ステータスを「マージ待ち」に進める
-  pr_approve:
-    needs: 
-      - connect_private_network
-      - parse_titles
-    
-    runs-on: ubuntu-latest
-    if: github.action == 'submitted'
-
-    steps:
+      
+      # ステータスを「マージ待ち」に進める
       - name: Send pr info to redmine
-        if: needs.parse_titles.outputs.ticket_id != 0
+        if: github.action == 'submitted' && needs.parse_titles.outputs.ticket_id != 0
         run: |
           curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_Approve}}}}' ${{env.TARGET_URL}}/issues/${{needs.parse_titles.outputs.ticket_id}}.json
+      
 
-
-  # ステータスを「修正要求」に進める
-  pr_reqfix:
-    needs: 
-      - connect_private_network
-      - parse_titles
-    
-    runs-on: ubuntu-latest
-    if: github.action == 'submitted'
-
-    steps:
+      # ステータスを「修正要求」に進める
       - name: Send pr info to redmine
-        if: needs.parse_titles.outputs.ticket_id != 0
+        if: github.action == 'submitted' && needs.parse_titles.outputs.ticket_id != 0
         run: |
           curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_RequireFix}}}}' ${{env.TARGET_URL}}/issues/${{needs.parse_titles.outputs.ticket_id}}.json
-  
 
-  # ステータスを「終了」に進め，関連するIssueを閉じる
-  pr_close:
-    needs: parse_titles
-    runs-on: ubuntu-latest
-    steps:
+
       # ステータスを「終了」に進める
       - name: Send pr info to redmine (pr is closed)
-        if: needs.parse_titles.outputs.ticket_id != 0 && github.event.pull_request.merged == true
+        if: github.action == 'closed' && needs.parse_titles.outputs.ticket_id != 0 && github.event.pull_request.merged == true
         run: |
           curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_MERGED}}}}' ${{env.TARGET_URL}}/issues/${{needs.parse_titles.outputs.ticket_id}}.json
-      
       # ステータスを「却下」に進める
       - name: Send pr info to redmine (pr is rejected)
-        if: needs.parse_titles.outputs.ticket_id != 0 && github.event.pull_request.merged == false
+        if: github.action == 'closed' && needs.parse_titles.outputs.ticket_id != 0 && github.event.pull_request.merged == false
         run: |
           curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_REJECT}}}}' ${{env.TARGET_URL}}/issues/${{needs.parse_titles.outputs.ticket_id}}.json
-      
       # 関連するIssueを閉じる
       - name: Close a related issue
-        if: needs.parse_titles.outputs.issue_id != 0
+        if: github.action == 'closed' && needs.parse_titles.outputs.issue_id != 0
         uses: actions/github-script@v6
         with:
           script: |
@@ -162,5 +133,3 @@ jobs:
               issue_number: ${{needs.parse_titles.outputs.issue_id}},
               state: 'closed'
             });
-        
-  

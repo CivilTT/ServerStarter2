@@ -12,10 +12,11 @@ env:
   # PROJECT_ID: 2
   
   # ステータスの番号（「作業中」の並び順番号を指定）
-  TARGET_STATUS_ID: 2
+  TARGET_STATUS_ID_Progress: 2
+  TARGET_STATUS_ID_Close: 5
 
 jobs:
-  notify:
+  notify_commit:
     runs-on: ubuntu-latest
     steps:
       # Tailescaleは https://zenn.dev/mimi_chan/articles/599841c45b4d49 の記事に従って設定する
@@ -32,31 +33,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get commit messages
+      # ブランチを切った直後の場合，beforeが存在しないため000...となってしまうことに対する対策
+      - name: Check before commit
+        id: log_arg
         run: |
-          commits=$(git log --format=%B ${{ github.event.before }}..${{ github.event.after }})
-          echo "$commits" | while read -r commit_message; do
-            echo "$commit_message"
+          if [[ "${{ github.event.before }}" == 0000000000000000000000000000000000000000 ]]; then
+            echo "::set-output name=arg::${{ github.event.after }} -1"
+          else
+            echo "::set-output name=arg::${{ github.event.before }}..${{ github.event.after }}"
+          fi
+
+      - name: Get commit messages and Send a message to Redmine
+        run: |
+          commits=$(git log --format=%H ${{ steps.log_arg.outputs.arg }})
+          echo "$commits" | while read -r commit_hash; do
+            cmd='git log --format=%B ${commit_hash} -1'
+            commit_message=$(eval ${cmd})
+            if [[ $commit_message =~ [rR]ef#([0-9]+) ]]; then
+              echo "{\"issue\":{\"status_id\":${{env.TARGET_STATUS_ID_Progress}},\"notes\":\"チケットが [$commit_message](https://github.com/${{github.repository}}/commit/$commit_hash) によって関連付けられました\"}}" > post.json
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d @post.json ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+            elif [[ $commit_message =~ [cC]lose#([0-9]+) ]]; then
+              echo "{\"issue\":{\"status_id\":${{env.TARGET_STATUS_ID_Progress}},\"notes\":\"チケットは [$commit_message](https://github.com/${{github.repository}}/commit/$commit_hash) によって完了しました\"}}" > post.json
+              curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d @post.json ${{env.TARGET_URL}}/issues/${BASH_REMATCH[1]}.json
+            fi
           done
-      
-      # # PRのタイトルで「PR#00 タイトル」のようにしたとき，チケット番号である#00の数値を抽出
-      # - name: Parse PR Title
-      #   id: parse
-      #   run: |
-      #     if [[ "${{github.event.pull_request.title}}" =~ PR#([0-9]+) ]]; then
-      #       echo "::set-output name=number::${BASH_REMATCH[1]}"
-      #     else
-      #       echo "::set-output name=number::0"
-      #     fi
-      # # ステータスを「終了」に進める
-      # - name: Send pr info to redmine (pr is closed)
-      #   if: steps.parse.outputs.number != 0 && github.event.pull_request.merged == true
-      #   run: |
-      #     curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_MERGED}}}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
-      # # ステータスを「却下」に進める
-      # - name: Send pr info to redmine (pr is rejected)
-      #   if: steps.parse.outputs.number != 0 && github.event.pull_request.merged == false
-      #   run: |
-      #     curl -X PUT -H "Content-Type:application/json" -H "X-Redmine-API-Key:${{secrets.REDMINE_API_KEY}}" -d '{"issue":{"status_id":${{env.TARGET_STATUS_ID_REJECT}}}}' ${{env.TARGET_URL}}/issues/${{steps.parse.outputs.number}}.json
-        
-  
